@@ -1,7 +1,5 @@
 import pyotp
-import json
 import requests
-
 
 PUBG = 578080
 PAY_DAY2 = 218620
@@ -12,7 +10,6 @@ UNTURNED = 304930
 CSGO = 730
 DOTA2 = 570
 TF2 = 440
-
 
 SORT_BY_CREATED = "created_at"
 SORT_BY_PRICE = "price"
@@ -35,12 +32,19 @@ class BitSkins:
     def __init__(self, api_key:str, secret:str):
         self.__api_key = api_key
         self.__secret = secret
-    
+
+    @staticmethod
+    def __listToCSV(list:list) -> str:
+        csv = str(list)[1:-1]
+        for char in ["'", " "]:
+            csv = csv.replace(char, "")
+        return csv
+
     def getAccountBalance(self) -> dict:
         '''
         Allows you to retrieve your available and pending balance in all currencies supported by BitSkins.\n
         ---
-        Return type: dictionary
+        Return type: dict
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_account_balance/?api_key={self.__api_key}&code={code}").json()
@@ -55,7 +59,7 @@ class BitSkins:
         Allows you to retrieve the entire price database used at BitSkins.\n
         ---
         Arguments:
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         ---
         Return type: dictionary
         '''
@@ -71,9 +75,9 @@ class BitSkins:
         '''
         Allows you to retrieve basic price data for items currently on sale at BitSkins.\n
         Arguments:
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         ---
-        Return type: dictionary
+        Return type: dict
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_price_data_for_items_on_sale/?api_key={self.__api_key}&code={code}&app_id={game}").json()
@@ -85,11 +89,12 @@ class BitSkins:
 
     def getAccountInventory(self, game:int=CSGO, page:int=1) -> dict:
         '''
-        Allows you to retrieve your account's available inventory on Steam (items listable for sale), your BitSkins inventory (items currently on sale), and your pending withdrawal inventory (items you delisted or purchased).\n
+        Allows you to retrieve your account's available inventory on Steam (items listable for sale), your BitSkins inventory (items currently on sale),
+         and your pending withdrawal inventory (items you delisted or purchased).\n
         As of January 20th 2016, only the newest 5,000 items are shown by default for the BitSkins inventory. Use page numbers to see all items.\n
         ---
         Arguments:
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         * page - Page number for BitSkins inventory. (optional)
         ---
         Return type: dict
@@ -108,18 +113,18 @@ class BitSkins:
         Retrieve dict of BitSkins inventory currently on sale\n
         ---
         Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)\n
         * page - Page number. (optional)\n
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)\n
-        * sort_by - {SORT_BY_CREATED|SORT_BY_PRICE}. CSGO only: SORT_BY_WEAR_VALUE. (optional)\n
-        * order - {DESCENDING|ASCENDING} (optional)\n
+        * sort_by - {`SORT_BY_CREATED`|`SORT_BY_PRICE`}. ```CSGO``` only: `SORT_BY_WEAR_VALUE`. (optional)\n
+        * order - {```DESCENDING```|```ASCENDING```} (optional)\n
         * market_hash_name - Full or partial item name (optional)\n
         * min_price - Minimum price (optional)\n
         * max_price - Maximum price (optional)\n
-        * has_stickers - {False|None|True}. For CSGO only. (optional)\n
-        * is_stattrak - {False|None|True}. For CSGO only. (optional)\n
-        * is_souvenir - {False|None|True}. For CSGO only. (optional)\n
+        * has_stickers - {False|None|True}. For ```CSGO``` only. (optional). None uses default value.\n
+        * is_stattrak - {False|None|True}. For ```CSGO``` only. (optional). None uses default value.\n
+        * is_souvenir - {False|None|True}. For ```CSGO``` only. (optional). None uses default value.\n
         * per_page - esults per page. Must be 24, 30, 60, 64, 120, 128, 240 or 480 (optional)\n
-        * show_trade_delayed_items - {False|None|True}. For CSGO only.\n
+        * show_trade_delayed_items - {False|None|True}. For ```CSGO``` only. None uses default value.\n
         ---
         Return type: dictionary
         '''
@@ -195,22 +200,20 @@ class BitSkins:
 
         return data
 
-    def getSpecificItemsOnSale(self, item_ids:list=None, game:int=CSGO) -> dict:
+    def getSpecificItemsOnSale(self, game:int=CSGO, item_ids:list=None) -> dict:
         '''
-        Allows you to retrieve data for specific Item IDs that are currently on sale. To gather Item IDs you wish to track/query, see the 'Get Inventory on Sale' API call for items currently on sale.\n
+        Allows you to retrieve data for specific Item IDs that are currently on sale. To gather Item IDs you wish to track/query, see the ```getInventoryOnSale()``` function for items currently on sale.\n
         ---
         Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)\n
         * Upto 250 item ID's in a list of strings
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)\n
         ---
         Return type: dict
         '''
         if item_ids == None:
             raise Exception("Must provide item id's for API call")
 
-        comma_seperated_ids = str(item_ids)[1:-1]
-        comma_seperated_ids = comma_seperated_ids.replace("'", "")
-        comma_seperated_ids = comma_seperated_ids.replace(" ", "")
+        comma_seperated_ids = self.__listToCSV(item_ids)
 
         code = pyotp.TOTP(self.__secret).now()   
         data = requests.get(f"https://bitskins.com/api/v1/get_specific_items_on_sale/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&app_id={game}").json()
@@ -224,10 +227,10 @@ class BitSkins:
         '''
         Returns a paginated list of items that need their prices reset. Items need prices reset when Steam changes tracker 
         so we are unable to match specified prices to the received items when you list them for sale. Upto 30 items per page. 
-        Items that need price resets always have the reserved price of 4985.11. Use variable RESERVED_PRICE when needed.\n
+        Items that need price resets always have the reserved price of 4985.11. Use variable ```RESERVED_PRICE``` when needed.\n
         ---
         Arguments:
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         * page - Page number for BitSkins inventory. (optional)
         ---
         Return type: dict
@@ -264,7 +267,7 @@ class BitSkins:
         ---
         Arguments:
         * amount - Amount in USD to withdraw. Must be at most equal to available balance, and over $5.00 USD.
-        * withdrawal_method - Can be PAYPAL, or SKRILL.
+        * withdrawal_method - Can be ```PAYPAL```, or ```SKRILL```.
         ---
         Return type: dict
         '''
@@ -280,9 +283,9 @@ class BitSkins:
         *Multiple simultaneous calls to this method may result in 'Failed to acquire lock' errors.*\n
         ---
         Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         * item_ids - list of item IDs as strings.
         * prices - list of prices at which you want to make the purchase. Important to specify this in case the prices change by the time you make this call.
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)
         * auto_trade - Initiate trade offer for purchased items' delivery. Default: True. (optional)
         * allow_trade_delayed_purchases - Use True if you want to purchase items that are trade-delayed. Default: False (True if signed in via the browser).
         ---
@@ -292,16 +295,10 @@ class BitSkins:
 
         if item_ids == None:
             raise Exception("Must provide item ids for api call")
-        else:
-            comma_seperated_ids = str(item_ids)[1:-1]
-            comma_seperated_ids = comma_seperated_ids.replace("'", "")
-            comma_seperated_ids = comma_seperated_ids.replace(" ", "")
         if prices == None:
             raise Exception("Must provide prices for api call")
-        else:
-            comma_seperated_prices = str(prices)[1:-1]
-            comma_seperated_prices = comma_seperated_prices.replace("'", "")
-            comma_seperated_prices = comma_seperated_prices.replace(" ", "")
+        comma_seperated_ids = self.__listToCSV(item_ids)
+        comma_seperated_prices = self.__listToCSV(prices)
 
         request = f'https://bitskins.com/api/v1/buy_item/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&prices={comma_seperated_prices}&app_id={game}'
         
@@ -336,26 +333,19 @@ class BitSkins:
         prices in the 'Get All Item Prices' endpoint if selling items instantly.\n
         ---
         Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         * item_ids - list of item IDs from your Steam inventory.
-        * prices - list of prices for each item ID you want to list for sale (order is respective to order of item_ids). Use INSTANT if selling instantly.
-        * game - The app_id for the inventory's game (defaults to CSGO if not specified). (optional)
-        ---
-        Return type: dict
+        * prices - list of prices for each item ID you want to list for sale (order is respective to order of item_ids). Use ```INSTANT``` if selling instantly.
         '''
         code = pyotp.TOTP(self.__secret).now()
 
         if item_ids == None:
             raise Exception("Must provide item ids for api call")
-        else:
-            comma_seperated_ids = str(item_ids)[1:-1]
-            comma_seperated_ids = comma_seperated_ids.replace("'", "")
-            comma_seperated_ids = comma_seperated_ids.replace(" ", "")
         if prices == None:
             raise Exception("Must provide prices for api call")
-        else:
-            comma_seperated_prices = str(prices)[1:-1]
-            comma_seperated_prices = comma_seperated_prices.replace("'", "")
-            comma_seperated_prices = comma_seperated_prices.replace(" ", "")
+
+        comma_seperated_ids = self.__listToCSV(item_ids)
+        comma_seperated_prices = self.__listToCSV(prices)
 
         request = f"https://bitskins.com/api/v1/list_item_for_sale/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&prices={comma_seperated_prices}&app_id={game}"
 
@@ -364,9 +354,129 @@ class BitSkins:
         if data['status'] == "fail":
             raise Exception(data['data']['error_message'])
 
+    def modifyListings(self, game:int=CSGO, item_ids:list=None, prices:list=None):
+        '''
+        Allows you to change the prices of item listings.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * item_ids - Item IDs to modify.
+        * prices - New item prices in a list (order respective to item_id's).
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        if item_ids == None:
+            raise Exception("Must provide item ids for api call")
+        if prices == None:
+            raise Exception("Must provide prices for api call")
+
+        comma_seperated_ids = self.__listToCSV(item_ids)
+        comma_seperated_prices = self.__listToCSV(prices)
+
+        request = f"https://bitskins.com/api/v1/modify_sale_item/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&prices={comma_seperated_prices}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data['status'] == "fail":
+            raise Exception(data['data']['error_message'])
+
+    def delistItem(self, game:int=CSGO, item_ids:list=None):
+        '''
+        Allows you to delist an active sale item.\n
+        *Multiple simultaneous calls to this method may result in 'Failed to acquire lock' errors.*\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * item_ids - list of item IDs.
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        if item_ids == None:
+            raise Exception("Must provide item ids for api call")
+
+        comma_seperated_ids = self.__listToCSV(item_ids)
+
+        request = f"https://bitskins.com/api/v1/delist_item/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data['status'] == "fail":
+            raise Exception(data['data']['error_message'])
+
+    def relistItem(self, game:int=CSGO, item_ids:list=None, prices:list=None):
+        '''
+        Allows you to re-list a delisted/purchased item for sale. Re-listed items can be sold instantly, where applicable.\n
+        *Multiple simultaneous calls to this method may result in 'Failed to acquire lock' error*\n
+        ---
+        Arguments
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * item_ids - list of Item IDs
+        * prices - Comma-separated prices for want for the item_ids. Use ```INSTANT``` if selling instantly.
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        if item_ids == None:
+            raise Exception("Must provide item ids for api call")
+        if prices == None:
+            raise Exception("Must provide prices for api call")
+
+        comma_seperated_ids = self.__listToCSV(item_ids)
+        comma_seperated_prices = self.__listToCSV(prices)
+
+        request = f"https://bitskins.com/api/v1/relist_item/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&prices={comma_seperated_prices}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data['status'] == "fail":
+            raise Exception(data['data']['error_message'])
+
+    def withdrawItem(self, game:int=CSGO, item_ids:list=None):
+        '''
+        Allows you to delist an active sale item and/or re-attempt an item pending withdrawal.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * item_ids - list of Item IDs
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        if item_ids == None:
+            raise Exception("Must provide item ids for api call")
+
+        comma_seperated_ids = self.__listToCSV(item_ids)
+
+        request = f"https://bitskins.com/api/v1/withdraw_item/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+    def bumpItem(self, game:int=CSGO, item_ids:list=None):
+        '''
+        Allows you to bump items higher for $0.75. Must have 2FA enabled if not logged in.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * item_ids - list of item IDs to bump
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        if item_ids == None:
+            raise Exception("Must provide item ids for api call")
+
+        comma_seperated_ids = self.__listToCSV(item_ids)
+
+        request = f"https://bitskins.com/api/v1/bump_item/?api_key={self.__api_key}&code={code}&item_ids={comma_seperated_ids}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
 if __name__ == "__main__":
     with open("bitskins/api.txt", "r") as f:
         lines = f.read().splitlines()
         api_key = lines[0]
         secret = lines[1]
-        wrapper = BitSkins(api_key, secret)
+    wrapper = BitSkins(api_key, secret)
