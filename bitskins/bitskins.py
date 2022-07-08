@@ -1,5 +1,6 @@
 import pyotp
 import requests
+import urllib.parse
 
 PUBG = 578080
 PAY_DAY2 = 218620
@@ -44,7 +45,7 @@ class BitSkins:
         '''
         Allows you to retrieve your available and pending balance in all currencies supported by BitSkins.\n
         ---
-        Return type: dict
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_account_balance/?api_key={self.__api_key}&code={code}").json()
@@ -61,7 +62,7 @@ class BitSkins:
         Arguments:
         * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         ---
-        Return type: dictionary
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_all_item_prices/?api_key={self.__api_key}&code={code}&app_id={game}").json()
@@ -77,7 +78,7 @@ class BitSkins:
         Arguments:
         * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         ---
-        Return type: dict
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_price_data_for_items_on_sale/?api_key={self.__api_key}&code={code}&app_id={game}").json()
@@ -97,7 +98,7 @@ class BitSkins:
         * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         * page - Page number for BitSkins inventory. (optional)
         ---
-        Return type: dict
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_my_inventory/?api_key={self.__api_key}&code={code}&page={page}&app_id={game}").json()
@@ -126,7 +127,7 @@ class BitSkins:
         * per_page - esults per page. Must be 24, 30, 60, 64, 120, 128, 240 or 480 (optional)\n
         * show_trade_delayed_items - {False|None|True}. For ```CSGO``` only. None uses default value.\n
         ---
-        Return type: dictionary
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()    
         request_str = f"https://bitskins.com/api/v1/get_inventory_on_sale/?api_key={self.__api_key}&code={code}&page={page}&app_id={game}"
@@ -142,7 +143,7 @@ class BitSkins:
             request_str += f"&order={order}"
 
         if market_hash_name != None:
-            request_str += f"&market_hash_name={market_hash_name}"
+            request_str += f"&market_hash_name={urllib.parse.quote(market_hash_name)}"
         
         if min_price != None:
             request_str += f"&min_price={min_price}"
@@ -206,9 +207,9 @@ class BitSkins:
         ---
         Arguments:
         * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)\n
-        * Upto 250 item ID's in a list of strings
+        * item_ids - Upto 250 item ID's in a list of strings
         ---
-        Return type: dict
+        Return type: ```dict```
         '''
         if item_ids == None:
             raise Exception("Must provide item id's for API call")
@@ -233,7 +234,7 @@ class BitSkins:
         * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
         * page - Page number for BitSkins inventory. (optional)
         ---
-        Return type: dict
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()   
         data = requests.get(f"https://bitskins.com/api/v1/get_reset_price_items/?api_key={self.__api_key}&code={code}&page={page}&app_id={game}").json()
@@ -250,7 +251,7 @@ class BitSkins:
         Arguments:
         * page - Page number. (optional)
         ---
-        Return type: dict
+        Return type: ```dict```
         '''
         code = pyotp.TOTP(self.__secret).now()
         data = requests.get(f"https://bitskins.com/api/v1/get_money_events/?api_key={self.__api_key}&code={code}&page={page}").json()
@@ -473,6 +474,182 @@ class BitSkins:
 
         if data["status"] == "fail":
             raise Exception(data["data"]["error_message"])
+
+    def getBuyHistory(self, game:int=CSGO, page:int=1) -> dict:
+        '''
+        Allows you to retrieve your history of bought items on BitSkins. Defaults to 30 items per page, with most recent appearing first.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * page - Page number. (Optional)
+        ---
+        Return type: ```dict```
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        request = f"https://bitskins.com/api/v1/get_buy_history/?api_key={self.__api_key}&code={code}&page={page}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
+
+    def getSellHistory(self, game:int=CSGO, page:int=1) -> dict:
+        '''
+        Allows you to retrieve your history of sold items on BitSkins. Defaults to 30 items per page, with most recent appearing first.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * page - Page number. (Optional)
+        ---
+        Return type: ```dict```
+        '''
+        code = pyotp.TOTP(self.__secret).now()
+
+        request = f"https://bitskins.com/api/v1/get_sell_history/?api_key={self.__api_key}&code={code}&page={page}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
+
+    def getItemHistory(self, game:int=CSGO, page:int=1, names:list=None, per_page:int=30) -> dict:
+        '''
+        Allows you to retrieve bought/sold/listed item history. By default, upto 30 items per page, and optionally up to 480 items per page.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * page - Page number. (optional)
+        * names -  Item names as a list (optional)
+        * per page - Results per page (between 30 and 480). (optional)
+        ---
+        Return type ```dict```
+        '''
+
+        if per_page < 30 or per_page > 480:
+            raise Exception("Per page must be between 30 and 480 inclusive")
+
+        code = pyotp.TOTP(self.__secret).now()
+
+        names = self.__listToCSV(names)
+
+        request = f"https://bitskins.com/api/v1/get_item_history/?api_key={self.__api_key}&code={code}&page={page}&names={names}&delimiter=,&per_page={per_page}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
+
+    def getTradeDetails(self, trade_token, trade_id) -> dict:
+        '''
+        Allows you to retrieve information about items requested/sent in a given trade from BitSkins. Trade details will be unretrievable 7 days after the initiation of the trade.\n
+        ---
+        Arguments:
+        * trade_token - The trade token in the Steam trade's message.
+        * trade_id - The trade ID in the Steam trade's message.
+        ---
+        Return type: ```dict```
+        '''
+
+        code = pyotp.TOTP(self.__secret).now()
+
+        request = f"https://bitskins.com/api/v1/get_trade_details/?api_key={self.__api_key}&code={code}&trade_token={trade_token}&trade_id={trade_id}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
+
+    
+    def getRecentTradeOffers(self, active_only:bool=None) -> dict:
+        '''
+        Allows you to retrieve information about 50 most recent trade offers sent by BitSkins. 
+        Response contains 'steam_trade_offer_state,' which is '2' if the only is currently active.\n
+        ---
+        Arguments:
+        * active_only - Value is ```True``` if you only need trade offers currently active. (optional)
+        ---
+        Return type: ```dict```
+        '''
+
+        code = pyotp.TOTP(self.__secret).now()
+
+        if active_only == None or not isinstance(active_only, bool):
+            active_only == ""
+        elif active_only == True:
+            active_only = "true"
+        elif active_only == False:
+            active_only = "false"
+
+        request = f"https://bitskins.com/api/v1/get_recent_trade_offers/?api_key={self.__api_key}&code={code}&active_only=true"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
+    
+    def getRecentSaleInfo(self, game:int=CSGO, page:int=1, market_hash_name:str=None) -> dict:
+        '''
+        Allows you to retrieve upto 5 pages worth of recent sale data for a given item name. 
+        These are the recent sales for the given item at BitSkins, in descending order.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * page - The page number. (optional)
+        * market_hash_name - The item's name.
+        ---
+        Return type: ```dict```
+        '''
+        if market_hash_name == None:
+            market_hash_name = ""
+        
+        market_hash_name = urllib.parse.quote(market_hash_name)
+        code = pyotp.TOTP(self.__secret).now()
+
+        request = f"https://bitskins.com/api/v1/get_sales_info/?api_key={self.__api_key}&code={code}&market_hash_name={market_hash_name}&page={page}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
+
+    def getRawPriceData(self, game:int=CSGO, market_hash_name:str=None) -> dict:
+        '''
+        Allows you to retrieve raw Steam Community Market price data for a given item. 
+        You can use this data to create your own pricing algorithm if you need it.\n
+        ---
+        Arguments:
+        * game - The app_id for the inventory's game (defaults to ```CSGO``` if not specified). (optional)
+        * market_hash_name - The item's name.
+        ---
+        Return type ```dict```
+        '''
+        if market_hash_name == None:
+            market_hash_name = ""
+        
+        market_hash_name = urllib.parse.quote(market_hash_name)
+        code = pyotp.TOTP(self.__secret).now()
+
+        request = f"https://bitskins.com/api/v1/get_steam_price_data/?api_key={self.__api_key}&code={code}&market_hash_name={market_hash_name}&app_id={game}"
+
+        data = requests.get(request).json()
+
+        if data["status"] == "fail":
+            raise Exception(data["data"]["error_message"])
+
+        return data
 
 if __name__ == "__main__":
     with open("bitskins/api.txt", "r") as f:
