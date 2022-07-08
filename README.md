@@ -13,10 +13,17 @@ Features support for all BitSkins supported games:
 * TF2
 
 Example Usage:
+
+Installation
+
+```
+pip install bitskins
+```
+
 ```python
 from bitskins import BitSkins, RUST
 
 wrapper = BitSkins("api key here", "secret here")
 
-print(wrapper.getAccountInventory(game=RUST, page=10)
+print(wrapper.getAccountInventory(game=RUST, page=10))
 ```
