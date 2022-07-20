@@ -12,13 +12,13 @@ Features support for all BitSkins supported games:
 * DOTA2
 * TF2
 
-Example Usage:
-
 Installation
 
 ```
 pip install bitskins
 ```
+
+Example Usage:
 
 ```python
 from bitskins import BitSkins, RUST
